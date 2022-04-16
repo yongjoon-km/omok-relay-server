@@ -19,6 +19,10 @@ func helloWorld(w http.ResponseWriter, r *http.Request) {
 func main() {
 	fmt.Println("hello world")
 
+	upgrader.CheckOrigin = func(r *http.Request) bool {
+		return true
+	}
+
 	http.HandleFunc("/", helloWorld)
 	http.HandleFunc("/ws", handleWS)
 	http.ListenAndServe(":8080", nil)
