@@ -12,10 +12,11 @@ type Event struct {
 	Args map[string]interface{} `json:"args"`
 }
 
-func readLoop(c *websocket.Conn) {
+func readLoop(c *websocket.Conn, clientSet ClientSet) {
 	log.Println("start readLoop")
 	for {
 		var event Event
+
 		err := c.ReadJSON(&event)
 
 		if err != nil {
@@ -23,30 +24,26 @@ func readLoop(c *websocket.Conn) {
 			log.Println(err)
 			c.Close()
 			break
-
 		}
 
-		log.Println(event)
-		log.Println(event.Type)
-		log.Println(event.Args)
-		log.Println(event.Args["turn"])
-
-		c.WriteMessage(0, []byte("hello world"))
-
-		log.Println("end forLoop")
+		for client := range clientSet {
+			client.WriteJSON(event)
+		}
 	}
-
-	log.Println("end readLoop")
+	log.Println("readLoop is closed")
 }
 
-func handleWS(w http.ResponseWriter, r *http.Request) {
+func handleWS(client ClientSet, w http.ResponseWriter, r *http.Request) {
+
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)
 		return
 	}
 
-	log.Println("Websocket connected successfully")
+	client[conn] = true
 
-	go readLoop(conn)
+	log.Println("Websocket connected successfully connection is")
+
+	go readLoop(conn, client)
 }

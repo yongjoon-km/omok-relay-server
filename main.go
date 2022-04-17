@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/gorilla/websocket"
@@ -12,19 +12,21 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 }
 
-func helloWorld(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "Hello World")
-}
+type ClientSet map[*websocket.Conn]bool
 
 func main() {
-	fmt.Println("hello world")
+	var clientSet = make(ClientSet)
 
 	upgrader.CheckOrigin = func(r *http.Request) bool {
 		return true
 	}
 
-	http.HandleFunc("/", helloWorld)
-	http.HandleFunc("/ws", handleWS)
-	http.ListenAndServe(":8080", nil)
+	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+		handleWS(clientSet, w, r)
+	})
 
+	log.Println("Websocket server started...")
+	if err := http.ListenAndServe(":8080", nil); err != nil {
+		log.Fatalln("server starting error")
+	}
 }
