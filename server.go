@@ -30,6 +30,7 @@ func readLoop(c *websocket.Conn, clientSet ClientSet) {
 			client.WriteJSON(event)
 		}
 	}
+	delete(clientSet, c)
 	log.Println("readLoop is closed")
 }
 
