@@ -27,6 +27,10 @@ func main() {
 	http.HandleFunc("/ws/", func(w http.ResponseWriter, r *http.Request) {
 		paths := strings.Split(r.URL.Path, "/")
 		var roomHash = paths[len(paths)-1]
+		if ok := Validate(roomHash); !ok {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
 		client, ok := room[roomHash]
 		if !ok {
 			log.Println("new client")
@@ -46,4 +50,20 @@ func main() {
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		log.Fatalln("server starting error")
 	}
+}
+
+func Validate(roomHash string) bool {
+	validChars := "0123456789ABCDEFGHIJKLMNPQRSTUVWXYZ"
+
+	if len(roomHash) != 4 {
+		return false
+	}
+
+	for _, c := range roomHash {
+		if !strings.Contains(validChars, string(c)) {
+			return false
+		}
+	}
+
+	return true
 }
